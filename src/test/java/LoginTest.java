@@ -1,15 +1,24 @@
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebElement;
+import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
 
 public class LoginTest {
 
-    static ChromeDriver driver = new ChromeDriver();
+    static ChromeDriver driver;
+
+    public void makeScreen(String fileName) throws IOException {
+        File scrFile = ((TakesScreenshot)driver).getScreenshotAs(OutputType.FILE);
+        FileUtils.copyFile(scrFile, new File(fileName+System.currentTimeMillis()+".jpg"));
+    }
 
     public static void c4ClearElement(WebElement element, Integer retries){
         if(retries == 0){
@@ -34,12 +43,20 @@ public class LoginTest {
         } else c4SendKeys(element, input, retries - 1);
     }
 
+    @BeforeSuite
+    public void init(){
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("headless");
+        options.addArguments("window-size=1200x600");
+        driver = new ChromeDriver(options);
+    }
+
     @Test
-    public void testLogin() {
+    public void testLogin() throws IOException {
 
         System.setProperty("webdriver.chrome.driver", "chromedriver.exe");
         driver.get("http://www.google.com");
-        driver.manage().window().maximize();
+        //driver.manage().window().maximize();
 
         driver.navigate().to("https://sydhavn.dev.cone.ee/c4.html");
 
@@ -51,9 +68,11 @@ public class LoginTest {
 
         c4SendKeys(loginIn, "DEV", 30);
         c4SendKeys(passIn,"1234", 30);
+        makeScreen("preLogin");
         submitButton.click();
 
         WebElement res =  wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector("span[content='Warehouse/Terminal']")));
+        makeScreen("afterLogin");
         assert(res.getText().equals("Warehouse/Terminal"));
     }
 
